@@ -18,6 +18,7 @@ import os
 
 #
 # GLOBALS
+tmp_path = "/tmp"
 cache = []
 yb = yum.YumBase()
 
@@ -35,7 +36,7 @@ def elementtodict(parent):
 
   if (not child):
     return None
-  
+
   # ignore whitespace and line feed crap
   while child.nodeType == Node.TEXT_NODE and not child.data.strip():
     child = child.nextSibling
@@ -59,8 +60,37 @@ def elementtodict(parent):
   return d
 
 
+def download_temp_file(src_url, dst_url, overwrite=False):
+
+  if dst_url is None or \
+     dst_url == '':
+    dst_url = src_url
+
+  if dst_url.startswith("file:///"):
+    dst_path = dst_url[7:]
+  elif dst_url.startswith("ftp://") or \
+       dst_url.startswith("http://"):
+    dst_path = tmp_path + "/" + dst_url[dst_url.rindex('/'):]
+  else:
+    dst_path=dst_url
 
 
+  if not os.path.exists(dst_path) or overwrite:
+    print("Downloading: %s -> %s" % (src_url, dst_path))
+
+    try:
+      u = urllib2.urlopen(src_url)
+      url_local_handle = open(dst_path, 'w')
+      url_local_handle.write(u.read())
+      url_local_handle.close()
+    except urllib2.URLError, e:
+      print e.reason.strerror
+      return ''
+    except urllib2.HTTPError, e:
+      print e.args
+      return ''
+
+  return dst_path
 
 
 def init():
@@ -73,7 +103,7 @@ def init():
 
 def load_repoman_data():
   print xmltodict("./rpmforge.xml")
-      
+
 
 
 def parse_cmdline():
@@ -83,7 +113,7 @@ def parse_cmdline():
   group = OptionGroup(parser, "Action Options")
 
   group.add_option("-a", "--add", dest="action_add", action="store_true", help="add a new repo")
-  group.add_option("-e", "--enable", dest="action_enable", action="store_true", help="enable an existing repo", default=True)
+  group.add_option("-e", "--enable", dest="action_enable", action="store_true", help="enable an existing repo")
   group.add_option("-d", "--disable", dest="action_disable", action="store_true", help="Disable an existing repo")
   group.add_option("-D", "--delete", dest="action_delete", action="store_true", help="delete an existing repo")
   group.add_option("-l", "--list", dest="action_list", action="store_true", help="list enabled repos)")
@@ -107,23 +137,22 @@ def parse_cmdline():
 
 
 def add_repo(repo):
-  
+
   r = format_repo(repo)
-
-  # check repoman short form cache
-  for c in cache:
-    if c['name'][0] == r: 
-      return add_repo_cache(repo, c)
-
 
   # check for fedora people repo
   if repo.startswith("fp:"):
-    print "Adding fedora people repository." 
+    return add_repo_fedora_people(repo[3:])
+
+  # check short form cache
+  for c in cache:
+    if c['name'][0] == r:
+      return add_repo_cache(repo, c)
 
   # check for RPM files
   if r[-4:] == ".rpm":
     return add_repo_rpm(repo)
-  
+
 
   # check if it's a URL
 
@@ -147,7 +176,7 @@ def format_repo(repo):
 # ADD METHODS
 
 def add_repo_cache(repo, c):
-  
+
   # default to all repo branches defined in the cache
   repo_filter = ['*']
 
@@ -192,13 +221,13 @@ def add_repo_cache(repo, c):
     if s['id'][0] in repo_source:
       if s['type'][0] == 'rpm':
         install_repo_rpm(s['url'][0], s['packagename'][0])
-      
+
       elif s['type'][0] == 'file':
-        install_repo_file(s['rl'][0])
+        install_repo_file(s['url'][0])
 
       else:
         print("Unknown source type: %s" % s['type'][0])
-    
+
   # re-read repo configuration
 #  yb.getReposFromConfig()
 
@@ -209,7 +238,7 @@ def add_repo_cache(repo, c):
     if r.isEnabled():
       continue
 
-    print "Enabling: %s" % r 
+    print "Enabling: %s" % r
     r.enablePersistent()
 
 
@@ -220,9 +249,26 @@ def add_repo_cache(repo, c):
     if not r.isEnabled():
       continue
 
-    print "Disabling: %s" % r 
+    print "Disabling: %s" % r
     r.disablePersistent()
 
+
+def add_repo_fedora_people(repo):
+
+  print "Adding fedora people repository: %s" % repo
+
+  repo_tokens = repo.split('/')
+
+  if len(repo_tokens) > 2:
+    return 0
+
+  repo_user = repo_tokens[0]
+  repo_name = repo_tokens[1]
+  repo_url = "http://repos.fedorapeople.org/repos/%s/%s/fedora-%s.repo" % ( repo_user, repo_name, repo_name)
+
+  print "Fetching: %s" % repo_url
+
+  install_repo_file(repo_url)
 
 def add_repo_rpm(repo):
   pass
@@ -258,57 +304,50 @@ def install_repo_rpm(url, package):
 
     return
 
+    dst_path = download_temp_file(url)
+
+    if not os.path.exists(dst_path):
+      print "Error downloading file."
+      return 1
+
     # fetch the file and store locally if required
-    if ( not url.startswith('file://') ):
-      
-      url_local = 'file:///tmp/' + rpm_file
- 
-      print("FETCHING: %s -> %s" % (url, url_local))
+    fd = os.open(dst_path, os.O_RDONLY)
 
-      if not os.path.exists(url_local[7:]):
-        try:
-          u = urllib2.urlopen(url)
-          url_local_handle = open(url_local, 'w')
-          url_local_handle.write(u.read())
-          url_local_handle.close()
-        except urllib2.URLError, e:
-          print e.reason.strerror
-          return 1
-        except urllib2.HTTPError, e:
-          print e.args
-          return 1
+    ts.setVSFlags(rpm._RPMVSF_NOSIGNATURES)
 
-      url = url_local
+    try:
+      h = ts.hdrFromFdno(fd)
+    except rpm.error, e:
+      print(e)
 
-      fd = os.open(url_local[7:], os.O_RDONLY)
+    os.close(fd)
 
-      ts.setVSFlags(rpm._RPMVSF_NOSIGNATURES)
+    ts.addInstall(h, rpm_file, 'i')
+    ts.check()
+    ts.order()
+    ts.run(install_repo_rpm_callback, '')
 
-      try:
-        h = ts.hdrFromFdno(fd)
-      except rpm.error, e:
-        print(e)
-
-      os.close(fd)
-      
-      ts.addInstall(h, rpm_file, 'i')
-      ts.check()
-      ts.order()
-
-      ts.run(install_repo_rpm_callback, '')
-      
 
 def install_repo_rpm_callback(reason, amount, total, key, client_data):
     if reason == rpm.RPMCALLBACK_INST_START:
       pass #print "Starting installation."
     elif reason == rpm.RPMCALLBACK_TRANS_STOP:
       pass #print "Transation stopping"
-    
+
 
 
 def install_repo_file(url):
   print("Installing repo file from: %s" % url)
 
+  dst_path = "/etc/yum.repos.d/" + url[url.rindex('/')+1:]
+
+  dst_path = download_temp_file(url, dst_path)
+
+  if not os.path.exists(dst_path):
+    print "Error downloading file."
+    return 1
+
+  # install into the yum repo store
 
 
 #
@@ -322,7 +361,7 @@ def enable_repo(repo):
 
   # check repoman short form cache
   for c in cache:
-    if c['name'][0] == r: 
+    if c['name'][0] == r:
       repo_found = True
       enable_repo_cache(repo, c)
 
@@ -374,7 +413,7 @@ def enable_repo_cache(repo, c):
     if r.isEnabled():
       continue
 
-    print "Enabling: %s" % r 
+    print "Enabling: %s" % r
     r.enablePersistent()
 
 
@@ -385,7 +424,7 @@ def disable_repo(repo):
 
   # check repoman short form cache
   for c in cache:
-    if c['name'][0] == r: 
+    if c['name'][0] == r:
       repo_found = True
       disable_repo_cache(repo, c)
 
@@ -437,9 +476,22 @@ def disable_repo_cache(repo, c):
     if not r.isEnabled():
       continue
 
-    print "Disabling: %s" % r 
+    print "Disabling: %s" % r
     r.disablePersistent()
 
+
+#
+# DELETE METHODS
+def delete_repos(repo):
+
+  # check if repo provided by rpm
+
+    # identify other repo files in rpm
+
+  # check for other repos in files
+
+  # prompt for deletion and dependencies
+  pass
 
 
 #
@@ -510,7 +562,7 @@ elif options.action_disable:
     for a in args:
       disable_repo(a)
   else:
-    print "Adding repositories must be done by a root user."
+    print "Disabling repositories must be done by a root user."
 
 elif options.action_delete:
   print "Deleting"
@@ -520,7 +572,7 @@ elif options.action_enable:
     for a in args:
       enable_repo(a)
   else:
-    print "Adding repositories must be done by a root user."
+    print "Enabling repositories must be done by a root user."
 
 
 
