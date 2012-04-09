@@ -22,7 +22,6 @@ tmp_path = "/tmp"
 cache = []
 yb = yum.YumBase()
 
-
 #
 # UTILITY FUNCTION
 def xmltodict(xmlfile):
@@ -107,7 +106,7 @@ def load_repoman_data():
 
 
 def parse_cmdline():
-  parser = OptionParser(usage="%prog [options]", version="%prog 1.0")
+  parser = OptionParser(usage="%prog [options]", version="%prog 0.1")
 
 
   group = OptionGroup(parser, "Action Options")
@@ -116,8 +115,8 @@ def parse_cmdline():
   group.add_option("-e", "--enable", dest="action_enable", action="store_true", help="enable an existing repo")
   group.add_option("-d", "--disable", dest="action_disable", action="store_true", help="Disable an existing repo")
   group.add_option("-D", "--delete", dest="action_delete", action="store_true", help="delete an existing repo")
-  group.add_option("-l", "--list", dest="action_list", action="store_true", help="list enabled repos)")
-  group.add_option("--list-all", dest="action_listall", action="store_true", help="list existing repos")
+  group.add_option("-l", "--list", dest="action_list", action="store_true", help="list enabled repos")
+  group.add_option("-L", "--list-all", dest="action_listall", action="store_true", help="list all available repos")
 
   parser.add_option_group(group)
 
@@ -126,8 +125,8 @@ def parse_cmdline():
   group.add_option("--name", dest="repo_name", help="NAME of new repo", metavar="NAME")
   group.add_option("--base", dest="repo_baseurl", help="base URL of new repo", metavar="URL")
   group.add_option("--mirror", dest="repo_mirrorurl", help="mirror list URL of new repo", metavar="URL")
-  group.add_option("--gpgcheck", dest="repo_gpgcheck", help="enable GPGcheck for new repo", action="store_true")
-  group.add_option("--nogpgcheck", dest="repo_gpgcheck", help="disable GPGcheck for new repo", action="store_false", default=True)
+  group.add_option("--gpgcheck", dest="repo_gpgcheck", help="enable GPG check for new repo", action="store_true")
+  group.add_option("--nogpgcheck", dest="repo_gpgcheck", help="disable GPG check for new repo", action="store_false", default=True)
   group.add_option("--gpg", dest="repo_gpgkey", help="path to GPG key of new repo", metavar="PATH")
 
   parser.add_option_group(group)
@@ -153,8 +152,9 @@ def add_repo(repo):
   if r[-4:] == ".rpm":
     return add_repo_rpm(repo)
 
-
   # check if it's a URL
+  if r[:6] == "http:/" or "ftp://":
+    return add_repo_url(repo)
 
   return 0
 
@@ -277,6 +277,9 @@ def add_repo_rpm(repo):
 def add_repo_file(repo):
   pass
 
+def add_repo_url(repo):
+  pass
+
 
 #
 # INSTALL METHODS
@@ -379,7 +382,6 @@ def enable_repo(repo):
     print "Repository does not exist."
 
 
-
 def enable_repo_cache(repo, c):
   # default to all repo branches defined in the cache
   repo_filter = ['*']
@@ -442,7 +444,6 @@ def disable_repo(repo):
     print "Repository does not exist."
 
 
-
 def disable_repo_cache(repo, c):
   # default to all repo branches defined in the cache
   repo_filter = ['*']
@@ -482,17 +483,73 @@ def disable_repo_cache(repo, c):
 
 #
 # DELETE METHODS
-def delete_repos(repo):
+def delete_repo(repo):
 
-  # check if repo provided by rpm
+  # print warning
+  print("WARNING: Disabling or deleting a repository may leave your system without important updates.")
 
-    # identify other repo files in rpm
+  # check for package explicitly
+  r = format_repo(repo)
 
-  # check for other repos in files
+  repo_found = False
 
-  # prompt for deletion and dependencies
-  pass
+  for r in yb.repos.findRepos(repo):
+    repo_found = True
 
+    if not repo_found:
+      continue
+
+    # get the yum repo conf for the repo
+    repo_file = r.repofile
+
+    # get repo config if provided by rpm
+    package_name = yb.pkgSack.searchProvides(repo_file)[0].name
+    installed = yb.isPackageInstalled(package_name)
+
+    if installed:
+      package = yb.rpmdb.returnNewestByName(package_name)[0]
+      # identify other repo files in rpm
+      extra_repos = []
+      for r in package.filelist:
+        if r.endswith(".repo"):
+          extra_repos.append(r)
+
+      # check for other repos in files
+      # to do
+
+      # create transaction
+      yb.remove(package)
+      yb.buildTransaction()
+
+      # get list of dependencies to also be removed
+      deps = []
+      for d in yb.tsInfo.getMembers():
+        if d.name != package_name:
+          deps.append(d.name)
+
+      # prompt for deletion and dependencies
+      print("\nWARNING: The %s repository is provided by the %s package." % (repo, package_name))
+      print("Removing %s will also remove the following repositories:\n" % (package_name))
+      for r in extra_repos:
+        print("\t%s" % (r))
+      print("\n Removing %s will also remove the following dependencies:\n" % (package_name))
+      for d in deps:
+        print("\t%s" % (d))
+
+      confirm_removal = raw_input("\nRemove %s? (y/N): " % (package_name))
+      if confirm_removal.upper().startswith("Y"):
+        #remove the rpm
+        print("Removing RPM that provides %s repository" % (repo))
+        yb.processTransaction()
+      else:
+        # reverse transaction
+        yb.tsInfo.pkgdict = {}
+    else:
+      # need to delete the file manually because it's not provided by an rpm
+      os.remove(repo_file)
+
+  if not repo_found:
+    print "Repository does not exist."
 
 #
 # LIST METHODS
@@ -565,7 +622,11 @@ elif options.action_disable:
     print "Disabling repositories must be done by a root user."
 
 elif options.action_delete:
-  print "Deleting"
+  if os.geteuid() == 0:
+    for a in args:
+      delete_repo(a)
+  else:
+    print "Deleting repositories must be done by a root user."
 
 elif options.action_enable:
   if os.geteuid() == 0:
@@ -573,7 +634,3 @@ elif options.action_enable:
       enable_repo(a)
   else:
     print "Enabling repositories must be done by a root user."
-
-
-
-
