@@ -1,1 +1,17 @@
-yum-repo is a tool to manage package repositories for yum.
+The yum-repo is a tool to manage package repositories for yum.
+
+#
+# TEST SETUP
+
+ln -s [checkout]/yum-repo/yum-repo/etc/yum-repo.d /etc/yum/yum-repo.d
+
+
+#
+# USAGE
+
+Running from a local checkout.
+
+$ cd yum-repo
+
+$ PYTHONPATH=./yum-repo ./bin/yum-repo
+

@@ -1,0 +1,108 @@
+#!/usr/bin/python
+#
+# This file is part of the JavaScript Lightweight Widget framework
+#
+# Copyright (C) 2010-2012, Ian Firns        <firnsy@securixlive.com>
+# Copyright (C) 2010-2012, Ian Firns        <firnsy@securixlive.com>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License Version 2 as
+# published by the Free Software Foundation.  You may not use, modify or
+# distribute this program under any other version of the GNU General
+# Public License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+
+
+#
+# GLOBAL IMPORTS
+from optparse import OptionParser, OptionGroup
+import os
+
+#
+# LOCAL IMPORTS
+from repomanager import RepoManager
+
+#
+# GLOBALS
+
+def parse_cmdline():
+  parser = OptionParser(usage="%prog [options]", version="%prog 0.1")
+
+
+  group = OptionGroup(parser, "Action Options")
+
+  group.add_option("-a", "--add", dest="action_add", action="store_true", help="add a new repo")
+  group.add_option("-e", "--enable", dest="action_enable", action="store_true", help="enable an existing repo")
+  group.add_option("-d", "--disable", dest="action_disable", action="store_true", help="Disable an existing repo")
+  group.add_option("-D", "--delete", dest="action_delete", action="store_true", help="delete an existing repo")
+  group.add_option("-l", "--list", dest="action_list", action="store_true", help="list enabled repos")
+  group.add_option("-L", "--list-all", dest="action_listall", action="store_true", help="list all available repos")
+
+  parser.add_option_group(group)
+
+
+  group = OptionGroup(parser, "Manual Options")
+  group.add_option("--name", dest="repo_name", help="NAME of new repo", metavar="NAME")
+  group.add_option("--base", dest="repo_baseurl", help="base URL of new repo", metavar="URL")
+  group.add_option("--mirror", dest="repo_mirrorurl", help="mirror list URL of new repo", metavar="URL")
+  group.add_option("--gpgcheck", dest="repo_gpgcheck", help="enable GPG check for new repo", action="store_true")
+  group.add_option("--nogpgcheck", dest="repo_gpgcheck", help="disable GPG check for new repo", action="store_false", default=True)
+  group.add_option("--gpg", dest="repo_gpgkey", help="path to GPG key of new repo", metavar="PATH")
+
+  parser.add_option_group(group)
+
+  return parser.parse_args()
+
+
+#
+# MAIN
+
+rm = RepoManager()
+rm.setup()
+
+# parse command line and action
+(options, args) = parse_cmdline()
+
+# check action
+if options.action_list:
+  rm.list_repos_enabled()
+
+elif options.action_listall:
+  rm.list_repos_all()
+
+elif options.action_add:
+  if os.geteuid() == 0:
+    for a in args:
+      rm.add_repo(a)
+  else:
+    print "Adding repositories must be done by a root user."
+
+elif options.action_disable:
+  if os.geteuid() == 0:
+    for a in args:
+      rm.disable_repo(a)
+  else:
+    print "Disabling repositories must be done by a root user."
+
+elif options.action_delete:
+  if os.geteuid() == 0:
+    for a in args:
+      rm.delete_repo(a)
+  else:
+    print "Deleting repositories must be done by a root user."
+
+elif options.action_enable:
+  if os.geteuid() == 0:
+    for a in args:
+      rm.enable_repo(a)
+  else:
+    print "Enabling repositories must be done by a root user."
