@@ -30,10 +30,11 @@ import yum
 import urllib2
 import urlparse
 import os
+import pprint
 
 #
 # LOCAL IMPORTS
-from utilities import xmlToDict, elementToDict, downloadFile
+from utilities import xmlToRepoObject, xmlToDict, elementToDict, downloadFile
 
 
 class RepoManager:
@@ -42,6 +43,15 @@ class RepoManager:
   YUM_REPO_PATH  = "/etc/yum/yum-repo.d"
   YUM_REPOS_PATH = "/etc/yum.repos.d"
 
+  # source types
+  URL_LOCAL = 0
+  URL_RAW = 1
+  URL_BASE = 2
+  URL_FEDORA_PEOPLE = 3
+
+  # install types
+  FILE_REPO = 0
+  FILE_RPM  = 1
 
   def __init__(self):
     self._cache = []
@@ -61,7 +71,11 @@ class RepoManager:
 
     for f in cache_files:
       print "Loading cache file: %s" % f
-      self._cache.append( xmlToDict(f) )
+      self._cache.append( xmlToRepoObject(f) )
+
+#      pp = pprint.PrettyPrinter(indent=2)
+#      pp.pprint( xmlToRepoObject( f ) )
+
 
 
   def add_repo(self, repo):
@@ -69,68 +83,71 @@ class RepoManager:
     r = self.format_repo(repo)
 
     # check for fedora people repo
-    if r['type'] == "FP":
+    if r['source_type'] == RepoManager.URL_FEDORA_PEOPLE:
       return self.add_repo_fedora_people(r['basename'])
 
     # check short form cache
     if r['cache']:
-      return self.add_repo_cache(repo, c)
+      return self.add_repo_cache(repo)
 
     # check for RPM files
-    if r['type'] == "RPM":
+    if r['install_type'] == RepoManager.FILE_RPM:
       return self.add_repo_rpm(repo)
 
     # check if it's a URL
-    if r['type'] == "URL":
+    if r['source_type'] == RepoManager.URL_RAW:
       return self.add_repo_url(repo)
 
     return 0
 
 
-  def format_repo_basename(self, repo):
-    return self.format_repo(repo)['basename']
-
-
-  def format_repo_type(self, repo):
-    return self.format_repo(repo)['type']
-
-
   def format_repo(self, repo):
 
-    _repo = {'path': repo, 'basename': repo, 'type': 'UNKNOWN', 'cache': 0}
+    _repo = {'path': repo, 'basename': repo, 'source_type': 'UNKNOWN', 'install_type': 'UNKNOWN', 'cache': 0, 'filter': ['*']}
 
+    # first pass determination at the source type
     if repo.startswith('http://'):
       _repo['basename'] = repo[7:]
-      _repo['type'] = "URL"
+      _repo['source_type'] = RepoManager.URL_RAW
     elif repo.startswith('ftp://'):
       _repo['basename'] = repo[6:]
-      _repo['type'] = "URL"
+      _repo['source_type'] = RepoManager.URL_RAW
     elif repo.startswith('https://'):
       _repo['basename'] = repo[8:]
-      _repo['type'] = "URL"
+      _repo['source_type'] = RepoManager.URL_RAW
 
     elif repo.startswith('fp://'):
       _repo['basename'] = repo[5:]
-      _repo['type'] = "FP"
+      _repo['install_type'] = RepoManger.URL_FEDORA_PEOPLE
     elif repo.startswith('fp:'):
       _repo['basename'] = repo[3:]
-      _repo['type'] = "FP"
+      _repo['source_type'] = RepoManager.URL_FEDORA_PEOPLE
 
-    elif repo.endsWith('.rpm'):
-      _repo['basename'] = repo[:repo.index(':')]
-      _repo['type'] = "RPM"
+    elif repo.startswith('file:///'):
+      _repo['basename'] = repo[8:]
+      _repo['install_type'] = RepoManager.URL_LOCAL
+    elif repo.startswith('/'):
+      _repo['basename'] = repo[1:]
+      _repo['install_type'] = RepoManager.URL_LOCAL
 
     # short form
     elif ':' in repo:
       _repo['basename'] = repo[:repo.index(':')]
+      _repo['filter'] = repo[repo.index(':')+1:].split(',')
 
+    print("DEBUG: Calculated basename is %s" % (_repo['basename']))
 
     # check if it's cached
     for c in self._cache:
+      print c['name'][0]
       if c['name'][0] == _repo['basename']:
         print("REPO is cached")
         _repo['cache'] = 1
         break
+
+    if repo.endswith('.rpm'):
+      _repo['basename'] = repo[:repo.index(':')]
+      _repo['install_type'] = RepoManager.FILE_RPM
 
     return _repo
 
@@ -173,7 +190,7 @@ class RepoManager:
           repo_source.append(r['source'][0])
 
       else:
-        repo_filter_disable2.append(r['name'][0])
+        repo_filter_disable.append(r['name'][0])
 
 
     # install the sources
@@ -182,14 +199,14 @@ class RepoManager:
 
     for s in c['sources'][0]['source']:
       if s['id'][0] in repo_source:
-        if s['type'][0] == 'rpm':
+        if s['install_type'][0] == 'rpm':
           self.install_repo_rpm(s['url'][0], s['packagename'][0])
 
-        elif s['type'][0] == 'file':
+        elif s['install_type'][0] == 'file':
           self.install_repo_file(s['url'][0])
 
         else:
-          print("Unknown source type: %s" % s['type'][0])
+          print("Unknown source type: %s" % s['install_type'][0])
 
     # re-read repo configuration
 #  yb.getReposFromConfig()
@@ -525,13 +542,16 @@ class RepoManager:
     rs = repos.keys()
     rs.sort()
 
-    max_repo_title_length = len( max(rs, key=len) ) + 2
-    format_str = "%-" + str(max_repo_title_length) + "s %-10s"
+    if len(rs):
+      max_repo_title_length = len( max(rs, key=len) ) + 2
+      format_str = "%-" + str(max_repo_title_length) + "s %-10s"
 
-    print(format_str % ("Repository", "Cost"))
-    print(format_str % ("----------", "----"))
-    for r in rs:
-      print(format_str % (r, repos[r].cost))
+      print(format_str % ("Repository", "Cost"))
+      print(format_str % ("----------", "----"))
+      for r in rs:
+        print(format_str % (r, repos[r].cost))
+    else:
+      print "No repos are currently enabled."
 
 
   def list_repos_all(self):

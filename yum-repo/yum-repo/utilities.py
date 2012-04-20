@@ -28,6 +28,50 @@ from xml.dom.minidom import parse, Node
 
 #
 # REPO UTILITY FUNCTIONS
+def xmlToRepoObject(xmlfile):
+  _repo_raw = xmlToDict(xmlfile)
+
+#
+# RPM containing repo information
+# {
+#   'type': 'rpm'
+#   'url': absolute_path (eg. http://blah.com/test.rpm or file:///tmp/test.rpm)
+#   'basename': base_name of url
+# }
+#
+# FILE containing repo information
+# {
+#   'type': 'file'
+#   'url': absolute_path (eg. http://blah.com/test.rpm or file:///tmp/test.rpm)
+#   'basename': base_name of url
+# }
+#
+#
+  _repo_object = {
+    'name':     _repo_raw['name'],
+    'id':       0,
+    'sources':  {},
+    'repos':    {}
+  }
+
+  # TODO: validate core requirements
+
+  for r in _repo_raw['sources'][0]['source']:
+    _repo_object['sources'][ r['id'][0] ] = {
+      'type': r['type'][0],
+      'url': r['url'][0],
+      'packagename': r['packagename'][0]
+    }
+
+  # TODO: validate source ID's
+  for r in _repo_raw['repos'][0]['repo']:
+    _repo_object['repos'][ r['id'][0] ] = {
+      'name': r['name'][0],
+      'alias': r['alias'],
+      'source': r['source'][0]
+    }
+
+  return _repo_object
 
 #
 # XML UTILITY FUNCTIONS
