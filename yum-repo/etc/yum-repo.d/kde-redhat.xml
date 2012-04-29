@@ -1,0 +1,54 @@
+<repoman>
+  <name>kde-redhat</name>
+  <sources>
+    <source>
+      <id>1</id>
+      <type>spec</type>
+      <url>http://apt.kde-redhat.org/apt/kde-redhat/fedora/kde.repo</url>
+    </source>
+    <source>
+      <id>2</id>
+      <type>spec</type>
+      <url>http://apt.kde-redhat.org/apt/kde-redhat/redhat/kde.repo</url>
+    </source>
+  </sources>
+  <repos>
+    <repo fedora=1>
+      <id>1</id>
+      <name>kde</name>
+      <source>1</source>
+      <requires>rpmfusion</requires>
+    </repo>
+    <repo fedora=1>
+      <id>1</id>
+      <name>kde-testing</name>
+      <source>1</source>
+      <requires>rpmfusion</requires>
+    </repo>
+    <repo fedora=1>
+      <id>1</id>
+      <name>kde-unstable</name>
+      <alias>kde-rawhide</alias>
+      <source>1</source>
+      <requires>rpmfusion</requires>
+    </repo>
+    <repo el=1>
+      <id>2</id>
+      <name>kde</name>
+      <source>2</source>
+      <requires>epel</requires>
+    </repo>
+    <repo el=1>
+      <id>2</id>
+      <name>kde-testing</name>
+      <source>2</source>
+      <requires>epel</requires>
+    </repo>
+    <repo el=1>
+      <id>2</id>
+      <name>kde-unstable</name>
+      <source>2</source>
+      <requires>epel</requires>
+    </repo>
+  </repos>
+</repoman>

@@ -1,0 +1,18 @@
+<repoman>
+  <name>dropbox</name>
+  <sources>
+    <source>
+      <id>1</id>
+      <type>manual</type>
+      <url>http://linux.dropbox.com/fedora/$releasever/</url>
+      <gpg>http://linux.dropbox.com/fedora/rpm-public-key.asc</gpg>
+    </source>
+  <repos>
+    <repo fedora=1 el=0>
+      <id>1</id>
+      <name>Dropbox</name>
+      <reponame>dropbox</reponame>
+      <source>1</source>
+    </repo>
+  </repos>
+</repoman>

@@ -1,0 +1,17 @@
+<repoman>
+  <name>virtualbox</name>
+  <sources>
+    <source>
+      <id>1</id>
+      <type>spec</type>
+      <url>http://download.virtualbox.org/virtualbox/rpm/fedora/virtualbox.repo</url>
+    </source>
+  </sources>
+  <repos>
+    <repo>
+      <id>1</id>
+      <name>virtualbox</name>
+      <source>1</source>
+    </repo>
+  </repos>
+</repoman>

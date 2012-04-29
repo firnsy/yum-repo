@@ -1,0 +1,66 @@
+<repoman>
+  <name>google</name>
+  <sources>
+    <source>
+      <id>1</id>
+      <type>manual</type>
+      <url>http://dl.google.com/linux/chrome/rpm/stable/$basearch</url>
+      <gpg>https://dl-ssl.google.com/linux/linux_signing_key.pub</gpg>
+    </source>
+    <source>
+      <id>2</id>
+      <type>manual</type>
+      <url>http://dl.google.com/linux/talkplugin/rpm/stable/$basearch</url>
+      <gpg>https://dl-ssl.google.com/linux/linux_signing_key.pub</gpg>
+    </source>
+    <source>
+      <id>3</id>
+      <type>manual</type>
+      <url>http://dl.google.com/linux/earth/rpm/stable/$basearch</url>
+      <gpg>https://dl-ssl.google.com/linux/linux_signing_key.pub</gpg>
+    </source>
+    <source>
+      <id>4</id>
+      <type>manual</type>
+      <url>http://dl.google.com/linux/mod-pagespeed/rpm/stable/$basearch</url>
+      <gpg>https://dl-ssl.google.com/linux/linux_signing_key.pub</gpg>
+    </source>
+    <source>
+      <id>5</id>
+      <type>manual</type>
+      <url>http://dl.google.com/linux/musicmanager/rpm/stable/$basearch</url>
+      <gpg>https://dl-ssl.google.com/linux/linux_signing_key.pub</gpg>
+    </source>
+  <repos>
+    <repo fedora=1 el=1>
+      <id>1</id>
+      <name>Google Chrome</name>
+      <reponame>google-chrome</reponame>
+      <source>1</source>
+    </repo>
+    <repo fedora=1 el=1>
+      <id>2</id>
+      <name>Google Talk Plugin</name>
+      <reponame>google-talkplugin</reponame>
+      <source>2</source>
+    </repo>
+    <repo fedora=1 el=1>
+      <id>3</id>
+      <name>Google Earth</name>
+      <reponame>google-earth</reponame>
+      <source>3</source>
+    </repo>
+    <repo fedora=1 el=1>
+      <id>4</id>
+      <name>mod-pagespeed</name>
+      <reponame>mod-pagespeed</reponame>
+      <source>4</source>
+    </repo>
+    <repo fedora=1 el=1>
+      <id>5</id>
+      <name>Google Music Manager</name>
+      <reponame>music-manager</reponame>
+      <source>5</source>
+    </repo>
+  </repos>
+</repoman>

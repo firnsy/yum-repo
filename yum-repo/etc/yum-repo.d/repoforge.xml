@@ -1,0 +1,29 @@
+<repoman>
+  <name>repoforge</name>
+  <alias>rpmforge</alias>
+  <sources>
+    <source>
+      <id>1</id>
+      <type>rpm</type>
+      <url>http://pkgs.repoforge.org/rpmforge-release/rpmforge-release-0.5.2-2.$distro$releasever.rf.$basearch.rpm</url>
+      <packagename>rpmforge-release</packagename>
+    </source>
+  </sources>
+  <repos>
+    <repo fedora=0 el=1>
+      <id>1</id>
+      <name>rpmforge</name>
+      <source>1</source>
+    </repo>
+    <repo fedora=0 el=1>
+      <id>2</id>
+      <name>rpmforge-extras</name>
+      <source>1</source>
+    </repo>
+    <repo fedora=0 el=1>
+      <id>3</id>
+      <name>rpmforge-testing</name>
+      <source>1</source>
+    </repo>
+  </repos>
+</repoman>

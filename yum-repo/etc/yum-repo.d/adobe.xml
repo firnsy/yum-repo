@@ -1,0 +1,17 @@
+<repoman>
+  <name>adobe</name>
+  <sources>
+    <source>
+      <id>1</id>
+      <type>rpm</type>
+      <url>http://linuxdownload.adobe.com/adobe-release/adobe-release-$basearch-1.0-1.noarch.rpm</rpm>
+    </source>
+  </sources>
+  <repos>
+    <repo>
+      <id>1</id>
+      <name>adobe-linux-$basearch</name>
+      <source>1</source>
+    </repo>
+  </repos>
+</repoman>

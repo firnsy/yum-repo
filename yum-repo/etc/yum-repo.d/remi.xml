@@ -1,0 +1,32 @@
+<repoman>
+  <name>remi</name>
+  <sources>
+    <source>
+      <id>1</id>
+      <type>rpm</type>
+      <url>http://rpms.famillecollet.com/remi-release-$releasever.rpm</url>
+      <packagename>remi-release</packagename>
+    </source>
+  </sources>
+  <repos>
+    <repo>
+      <id>1</id>
+      <name>remi</name>
+      <source>1</source>
+      <requires>
+        <fedora>rpmfusion</fedora>
+        <el>epel</el>
+      </requires>
+    </repo>
+    <repo>
+      <id>2</id>
+      <name>remi-test</name>
+      <alias>remi-testing</alias>
+      <source>1</source>
+      <requires>
+        <fedora>rpmfusion</fedora>
+        <el>epel</el>
+      </requires>
+    </repo>
+  </repos>
+</repoman>

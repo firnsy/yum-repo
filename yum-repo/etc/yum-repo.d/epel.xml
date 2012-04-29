@@ -1,0 +1,44 @@
+<repoman>
+  <name>epel</name>
+  <sources>
+    <source>
+      <id>1</id>
+      <type>rpm</type>
+      <url releasever=5>http://download.fedoraproject.org/pub/epel/5/$basearch/epel-release-5-4.noarch.rpm</url>
+      <url releasever=6>http://download.fedoraproject.org/pub/epel/6/$basearch/epel-release-6-5.noarch.rpm</url>
+      <packagename>epel-release</packagename>
+    </source>
+  </sources>
+  <repos>
+    <repo>
+      <id>1</id>
+      <name>epel</name>
+      <source>1</source>
+    </repo>
+    <repo>
+      <id>1</id>
+      <name>epel-debuginfo</name>
+      <source>1</source>
+    </repo>
+    <repo>
+      <id>1</id>
+      <name>epel-source</name>
+      <source>1</source>
+    </repo>
+    <repo>
+      <id>1</id>
+      <name>epel-testing</name>
+      <source>1</source>
+    </repo>
+    <repo>
+      <id>1</id>
+      <name>epel-testing-debuginfo</name>
+      <source>1</source>
+    </repo>
+    <repo>
+      <id>1</id>
+      <name>epel-testing-source</name>
+      <source>1</source>
+    </repo>
+  </repos>
+</repoman>
