@@ -1,8 +1,9 @@
 #!/usr/bin/python
 #
-# This file is part of the JavaScript Lightweight Widget framework
+# This file is part of the Yum Repo tool
 #
-# Copyright (C) 2010-2012, Ian Firns        <firnsy@securixlive.com>
+# Copyright (C) 2012, Ian Firns <firnsy@securixlive.com>
+# Copyright (C) 2012, Chris Smart <mail@christophersmart.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License Version 2 as
