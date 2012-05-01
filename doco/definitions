@@ -1,0 +1,275 @@
+
+
+
+-----------------------------------------------------------------------------
+0. INTRODUCTION
+-----------------------------------------------------------------------------
+
+The XML Repository Definition File purpose is to define the metadata of a
+repository. While yum repositories once on a system are defined by a .repo
+file, that file can be provided by any number of means.
+
+Some of these include:
+ * spec file itself
+ * rpm (via a "release" package or other)
+ * nothing (it must be created manually)
+
+The definitions allow for an offline look at a repositories purpose, and
+provide a mechanism for this to be installed/created on the system.
+
+
+-----------------------------------------------------------------------------
+1. GENERAL SYNTAX
+-----------------------------------------------------------------------------
+
+An XML Repository Definition must be enclose with the following tags:
+
+<yumrepo>
+  ...
+</yumrepo>
+
+
+The following first level children are required:
+<yumrepo>
+  <name></name>
+  <sources></sources>
+  <repos></repos>
+<yumrepo>
+
+The "alias" first level child is optional:
+<yumrepo>
+  <alias></alias>
+</yumrepo>
+
+
+<name></name>
+
+Describes the overarching reference name of the repository group and
+its corresponding metadata. For example "rpmfusion" or "repoforge".
+
+RECOMMENDED: The name should be in lowercase only and contain no spaces.
+
+
+<sources></sources>
+
+Describes the various sources for the repository (that which provides
+the .repo file). As yum-repo is distribution agnostic, this might
+include seperate information for various distros and versions, as well
+as architecture.
+
+See section 3 for more information.
+
+
+<repos></repos>
+
+These are the individual repositories that the group has. For example
+the "rpmfusion" group will contain several, such as:
+ * rpmfusion-free
+ * rpmfusion-free-updates
+ * rpmfusion-nonfree
+ * rpmfusion-nonfree-updates
+
+Each repo entry will reference a source entry (repos in the same group
+might have different sources). In addition, an individual .repo file
+might contain several individual repositories.
+
+See section 4 for more information.
+
+
+<alias></alias>
+
+Describes an alternative, or alias, to the reference name. For example
+"repoforge" used to be called "rpmforge" so this may be used here.
+
+
+-----------------------------------------------------------------------------
+2. YUM-ISH VARIABLES AND FILTERS
+-----------------------------------------------------------------------------
+
+You can use and reference the following built-in variables with your XML
+Repository Definition files.
+
+
+$basearch
+
+  You can use $basearch to reference the base architecture of the system.
+  For example, i686 and i586 machines both have a base architecture of i386,
+  while 64 bit AMD and Intel machines have a base architecture of x86_64.
+
+
+$arch
+
+  You can use this variable to refer to the system's CPU architecture as
+  returned when calling Python's os.uname() function. Valid values for $arch
+  include: i586, i686 and x86_64.
+
+
+$releasever
+
+  You can use this variable to reference the release version of RHEL.
+  Yum obtains the value of $releasever from the distroverpkg=value line in
+  the /etc/yum.conf configuration file. If there is no such line in
+  /etc/yum.conf, then yum infers the correct value by deriving the version
+  number from the redhat-release package.
+
+
+$dist
+
+  You can use this variable to define a targetted RPM based distribution.
+  Valid values for $dist include:
+  * fc (for Fedora and derivatives, such as Kororaa)
+  * el (for RHEL and derivatives, such as CentOS)
+
+
+You can use and reference the following built-in filters within your XML
+Repository Definition files. Multiple values can be specified for filtering
+using a comma delimeter.
+
+
+< ... basearch="" ... >
+
+< ... arch="" ... >
+
+< ... releasever="" ... >
+
+< ... dist="" ... >
+
+
+For example:
+
+<url dist="fc,el" basearch="x86_64">URI</url>
+
+This URL will only be valid on a Fedora or RHEL box that is using the x86_64
+architecture.
+
+
+-----------------------------------------------------------------------------
+3. SOURCES
+-----------------------------------------------------------------------------
+
+Sources contains one or more source definitions for one or more repositories.
+Each source definition must be encased in a <source> child element.
+
+The following first level children are required:
+<sources>
+  <source>
+    <id></id>
+    <type></type>
+    <url></url>
+  </source>
+</sources>
+
+
+The following are optional (but recommended):
+<sources>
+  <source>
+    <gpg></gpg>
+    <pkgname></pkgname>
+  </source>
+</sources>
+
+Here is an example of the format:
+
+<sources>
+  <source>
+    <id>[unique positive integer]</id>
+    <type>[man|spec|rpm]</type>
+    <url dist="" arch="" basearch="" releasever="">[URI]</url>
+    <gpg>[URI]</gpg>
+    <pkgname>[string]</pkgname>
+  </source>
+</sources>
+
+
+<id></id>
+
+This must be a positive integer (unique within the XML file).
+
+
+<type></type>
+
+Defines the type of source. This might be:
+ * rpm (for a release rpm)
+ * file (for a spec file)
+ * url (for a repository)
+ * man (where it must be built manually)
+
+
+<url></url>
+
+Defines the location of the type.
+
+
+<gpg></gpg>
+
+Defines the location of the GPG key for the release RPM (if type rpm)
+or for the repository (if type man). This is usually the same.
+
+
+<pkgname</pkgname>
+
+Valid only for type rpm, specifies the name of the rpm release package
+which provides .repo files for repositories.
+
+
+
+A real example:
+
+<sources>
+  <source>
+    <id>1</id>
+    <type>man</type>
+    <url>http://dl.google.com/linux/chrome/rpm/stable/$basearch</url>
+    <gpg>https://dl-ssl.google.com/linux/linux_signing_key.pub</gpg>
+  </source>
+</sources>
+
+Example with multiple sources
+
+<sources>
+  <source>
+    <id>1</id>
+    <type>rpm</type>
+    <url dist="fc">http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-stable.noarch.rpm</url>
+    <packagename>rpmfusion-free-release</packagename>
+  </source>
+  <source>
+    <id>2</id>
+    <type>rpm</type>
+    <url dist="fc">http://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-stable.noarch.rpm</url>
+    <packagename>rpmfusion-nonfree-release</packagename>
+  </source>
+</sources>
+
+-----------------------------------------------------------------------------
+4. REPOS
+-----------------------------------------------------------------------------
+
+
+Show a DTD-ish summary:
+
+  <repo>
+    <id></id>
+    <name></name>
+    <alias></alias>
+    <source></source>
+    <requires></requires>
+    <conflicts></conflicts>
+    <override distro="" arch="" basearch="" releasever="">
+      <source></source>
+      <requires></requires>
+      <conflicts></conflicts>
+    </override>
+  </repo>
+
+Show an example:
+
+  <repo distro="fc,el">
+    <id>2</id>
+    <name>Google Talk Plugin</name>
+    <reponame>google-talkplugin</reponame>
+    <source>2</source>
+  </repo>
+
+
+
