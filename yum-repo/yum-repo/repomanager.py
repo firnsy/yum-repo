@@ -69,9 +69,17 @@ class RepoManager:
 
     cache_files = glob.glob(os.path.join(path, "*.xml"))
 
+    print "Loading repo definition files:"
+
     for f in cache_files:
-      print "Loading cache file: %s" % f
-      self._cache.append( xmlToRepoObject(f) )
+
+      try:
+        self._cache.append( xmlToRepoObject(f) )
+
+      except:
+        print "  - %s" % f
+      else:
+        print "  - %s" % f
 
 #      pp = pprint.PrettyPrinter(indent=2)
 #      pp.pprint( xmlToRepoObject( f ) )

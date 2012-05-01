@@ -25,12 +25,20 @@
 # GLBOAL IMPORTS
 import os
 import urllib2
+import sys
 from xml.dom.minidom import parse, Node
 
 #
 # REPO UTILITY FUNCTIONS
 def xmlToRepoObject(xmlfile):
-  _repo_raw = xmlToDict(xmlfile)
+  try:
+
+    _repo_raw = xmlToDict(xmlfile)
+
+  except:
+    e = sys.exc_info()[1]
+    print("ERROR: %s (%s)" % (e, xmlfile) )
+    return {}
 
 #
 # RPM containing repo information
