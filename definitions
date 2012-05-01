@@ -1,0 +1,138 @@
+
+
+
+-----------------------------------------------------------------------------
+0. INTRODUCTION
+-----------------------------------------------------------------------------
+
+The XML Repository Definition File purpose is to define the metadata of a
+repository. Repositories come in many flavours (rpm, file, blah).
+
+The definitions allow for an offline look at a repositories purpose.
+
+
+-----------------------------------------------------------------------------
+1. GENERAL SYNTAX
+-----------------------------------------------------------------------------
+
+An XML Repository Definition must be enclose with the following tags:
+
+<yumrepo>
+  ...
+</yumrepo>
+
+
+The available first level children:
+<yumrepo>
+  <name></name>
+  <alias></alias>
+  <sources></sources>
+  <repos></repos>
+<yumrepo>
+
+
+
+<name></name>
+
+Describes the reference name of the repository and its corresponding 
+metadata. For example "rpmfusion" or "rpmforge".
+
+RECOMMENDED: The name should be in lowercase only and contain no spaces.
+
+
+<alias></alias>
+
+Describes an alternative, or alias, to the reference name.
+
+
+<sources></sources>
+
+Blah ...
+
+See section 3 for more information.
+
+
+
+<repos></repos>
+
+Blah ... 
+
+See section 4 for more information.
+
+
+-----------------------------------------------------------------------------
+2. YUM-ISH VARIABLES
+-----------------------------------------------------------------------------
+
+You can use and reference the following built-in variables with your XML
+Repository Definition files.
+
+
+$basearch
+
+  You can use $basearch to reference the base architecture of the system.
+  For example, i686 and i586 machines both have a base architecture of i386,
+  and AMD64 and Intel64 machines have a base architecture of x86_64. 
+
+
+$arch
+
+  You can use this variable to refer to the system's CPU architecture as
+  returned when calling Python's os.uname() function. Valid values for $arch
+  include: i586, i686 and x86_64.  
+
+
+$releasever
+
+  You can use this variable to reference the release version of RHEL.
+  Yum obtains the value of $releasever from the distroverpkg=value line in
+  the /etc/yum.conf configuration file. If there is no such line in
+  /etc/yum.conf, then yum infers the correct value by deriving the version
+  number from the redhat-release package. 
+
+
+$distro
+
+  You can use this variable to define a targetted RPM based distrubtion.
+  Valid values for $distro include: fedora, rhel and centos.
+
+
+-----------------------------------------------------------------------------
+3. SOURCES
+-----------------------------------------------------------------------------
+
+
+Show a DTD-ish summary:
+
+
+Show an example:
+
+  <source>
+    <id>1</id>
+    <type>manual</type>
+    <url>http://dl.google.com/linux/chrome/rpm/stable/$basearch</url>
+    <gpg>https://dl-ssl.google.com/linux/linux_signing_key.pub</gpg>
+  </source>
+ 
+
+
+
+-----------------------------------------------------------------------------
+4. REPOS
+-----------------------------------------------------------------------------
+
+
+Show a DTD-ish summary:
+
+
+Show an example:
+
+  <repo distro="fedora,rhel,centos">
+    <id>2</id>
+    <name>Google Talk Plugin</name>
+    <reponame>google-talkplugin</reponame>
+    <source>2</source>
+  </repo>
+
+
+

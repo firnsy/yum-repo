@@ -13,17 +13,25 @@
     </source>
   </sources>
   <repos>
-    <repo fedora=1>
+    <repo>
       <id>1</id>
       <name>kde</name>
       <source>1</source>
       <requires>rpmfusion</requires>
+      <override distro="rhel,centos">
+          <requires>epel</requires>
+          <source>2</source>
+      </override>
     </repo>
-    <repo fedora=1>
+    <repo>
       <id>1</id>
       <name>kde-testing</name>
       <source>1</source>
       <requires>rpmfusion</requires>
+      <override distro="rhel,centos">
+          <requires>epel</requires>
+          <source>2</source>
+      </override>
     </repo>
     <repo fedora=1>
       <id>1</id>
@@ -31,24 +39,10 @@
       <alias>kde-rawhide</alias>
       <source>1</source>
       <requires>rpmfusion</requires>
-    </repo>
-    <repo el=1>
-      <id>2</id>
-      <name>kde</name>
-      <source>2</source>
-      <requires>epel</requires>
-    </repo>
-    <repo el=1>
-      <id>2</id>
-      <name>kde-testing</name>
-      <source>2</source>
-      <requires>epel</requires>
-    </repo>
-    <repo el=1>
-      <id>2</id>
-      <name>kde-unstable</name>
-      <source>2</source>
-      <requires>epel</requires>
+      <override distro="rhel,centos">
+          <requires>epel</requires>
+          <source>2</source>
+      </override>
     </repo>
   </repos>
 </repoman>
