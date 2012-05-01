@@ -61,7 +61,7 @@ See section 4 for more information.
 
 
 -----------------------------------------------------------------------------
-2. YUM-ISH VARIABLES
+2. YUM-ISH VARIABLES AND FILTERS
 -----------------------------------------------------------------------------
 
 You can use and reference the following built-in variables with your XML
@@ -97,6 +97,30 @@ $distro
   Valid values for $distro include: fedora, rhel and centos.
 
 
+
+You can use and reference the following built-in filters within your XML
+Repository Definition files. Multiple values can be specified for filtering
+using a comma delimeter.
+
+
+< ... basearch="" ... >
+
+< ... arch="" ... >
+   
+< ... releasever="" ... >
+
+< ... distro="" ... >
+
+     
+
+For example:
+
+<url distro="fedora,rhel" arch="x86_64">URI</url>
+
+This URL will on be valid on a Fedora or RHEL box that is using the x86_64
+architecture.
+
+
 -----------------------------------------------------------------------------
 3. SOURCES
 -----------------------------------------------------------------------------
@@ -104,6 +128,12 @@ $distro
 
 Show a DTD-ish summary:
 
+  <source>
+    <id>[positive integer]</id>
+    <type>[manual|spec|rpm]</type>
+    <url distro="" arch="" basearch="" releasever="">[URI]</url>
+    <gpg></gpg>
+  </source>
 
 Show an example:
 
@@ -124,6 +154,19 @@ Show an example:
 
 Show a DTD-ish summary:
 
+  <repo>
+    <id></id>
+    <name></name>
+    <alias></alias>
+    <source></source>
+    <requires></requires>
+    <conflicts></conflicts>
+    <override distro="" arch="" basearch="" releasever="">
+      <source></source>
+      <requires></requires>
+      <conflicts></conflicts>
+    </override>
+  </repo>
 
 Show an example:
 
