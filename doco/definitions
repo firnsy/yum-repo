@@ -183,7 +183,8 @@ Here is an example of the format:
 
 <id></id>
 
-This must be a positive integer (unique within the XML file).
+This must be a positive integer (unique within the source elements of
+the XML file).
 
 
 <type></type>
@@ -245,8 +246,32 @@ Example with multiple sources
 4. REPOS
 -----------------------------------------------------------------------------
 
+Repos entities contain the details of individual repositories, as defined in
+a .repo file. Each repo must reference a source by its id.
 
-Show a DTD-ish summary:
+Because a repo might have different requirements for various distros, the
+overrides element allows you to define specific requirements without having
+to repeat the entire repo.
+
+
+The following first level children are required:
+  <repo>
+    <id></id>
+    <name></name>
+    <source></source>
+  </repo>
+
+
+The following are optional:
+  <repo>
+    <alias></alias>
+    <requires></requires>
+    <conflicts></conflicts>
+    <override></override>
+  </repo>
+
+
+Here is an example of the format:
 
   <repo>
     <id></id>
@@ -272,4 +297,83 @@ Show an example:
   </repo>
 
 
+<id></id>
+
+This must be a positive integer (unique within the repos elements of
+the XML file).
+
+
+<name></name>
+
+Specifies the actual name of the repo, as expected in the .repo file.
+For example "rpmfusion-nonfree-updates".
+
+NOTE: The name should match the case of the .repo name.
+
+
+<source></source>
+
+This references the id of the source which provides the .repo file (it
+will be a positive integer).
+
+
+<alias></alias>
+This is an alias for the repository name, for example if a repository
+uses a name like "repo-unstable" you may wish to add a "repo-rawhide"
+alias for consistency.
+
+
+<requires></requires>
+Some repositories have dependencies (like RPMFusion on RHEL which
+requires EPEL). If so, specify them here (the required repo must
+also be available in yum-repo so that it can be enabled).
+
+
+<conflicts></conflicts>
+Some repositories my conflict with others. If so, you can specify them
+here and yum-repo can disable it (the conflicting repo does not need
+to be defined in yum-repo to be disabled).
+
+
+<override></override>
+This important tag allows settings to be overridden for a specific
+distributions and versions or architectures. Anything not overridden
+will be used from default settings in the rest of the repo definition.
+
+If you are using override, there must be some child elements defining
+what you are overriding. In addition there must be filters in elements
+to define what the overrides apply to.
+
+
+Simple example which defines a seperate source for 64bit systems:
+  <repo>
+    <id>1</id>
+    <name>test</name>
+    <source>1</source>
+    <override basearch="x86_64">
+      <source>2</source>
+    </override>
+  </repo>
+
+
+More complicated example which defines a seperate source for RHEL 6
+systems which requires a specific repository, Fedora which has a
+conflict with another repository:
+  <repo dist="el,fc">
+    <id>1</id>
+    <name>test</name>
+    <source>1</source>
+    <override dist="el" releasever="6" basearch="x86_64">
+      <source>2</source>
+      <requires>another-repo</requires>
+    </override>
+    <override dist="el" releasever="6" basearch="i386">
+      <source>3</source>
+      <requires>another-repo</requires>
+      <conflicts>someother-repo</conflicts>
+    </override>
+    <override dist="fc">
+      <conflicts>someother-repo</conflicts>
+    </override>
+  </repo>
 
