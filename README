@@ -15,3 +15,7 @@ $ cd yum-repo
 
 $ PYTHONPATH=./yum-repo ./bin/yum-repo
 
+
+#
+# XML
+For details on the XML format, please see doco/definitions
