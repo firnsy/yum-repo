@@ -1,5 +1,5 @@
-<repoman>
-  <name>adobe</name>
+<yumrepo>
+  <name dist="fc,el">adobe</name>
   <sources>
     <source>
       <id>1</id>
@@ -14,4 +14,4 @@
       <source>1</source>
     </repo>
   </repos>
-</repoman>
+</yumrepo>

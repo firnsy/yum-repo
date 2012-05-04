@@ -1,10 +1,11 @@
-<repoman>
-  <name>virtualbox</name>
+<yumrepo>
+  <name dist="el,fc">virtualbox</name>
   <sources>
     <source>
       <id>1</id>
       <type>spec</type>
-      <url>http://download.virtualbox.org/virtualbox/rpm/fedora/virtualbox.repo</url>
+      <url dist="el">http://download.virtualbox.org/virtualbox/rpm/rhel/virtualbox.repo</url>
+      <url dist="fc">http://download.virtualbox.org/virtualbox/rpm/fedora/virtualbox.repo</url>
     </source>
   </sources>
   <repos>
@@ -14,4 +15,4 @@
       <source>1</source>
     </repo>
   </repos>
-</repoman>
+</yumrepo>

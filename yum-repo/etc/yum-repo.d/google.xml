@@ -1,5 +1,5 @@
-<repoman>
-  <name>google</name>
+<yumrepo>
+  <name dist="el,fc">google</name>
   <sources>
     <source>
       <id>1</id>
@@ -32,35 +32,35 @@
       <gpg>https://dl-ssl.google.com/linux/linux_signing_key.pub</gpg>
     </source>
   <repos>
-    <repo fedora=1 el=1>
+    <repo>
       <id>1</id>
       <name>Google Chrome</name>
       <reponame>google-chrome</reponame>
       <source>1</source>
     </repo>
-    <repo fedora=1 el=1>
+    <repo>
       <id>2</id>
       <name>Google Talk Plugin</name>
       <reponame>google-talkplugin</reponame>
       <source>2</source>
     </repo>
-    <repo fedora=1 el=1>
+    <repo>
       <id>3</id>
       <name>Google Earth</name>
       <reponame>google-earth</reponame>
       <source>3</source>
     </repo>
-    <repo fedora=1 el=1>
+    <repo>
       <id>4</id>
       <name>mod-pagespeed</name>
       <reponame>mod-pagespeed</reponame>
       <source>4</source>
     </repo>
-    <repo fedora=1 el=1>
+    <repo>
       <id>5</id>
       <name>Google Music Manager</name>
       <reponame>music-manager</reponame>
       <source>5</source>
     </repo>
   </repos>
-</repoman>
+</yumrepo>

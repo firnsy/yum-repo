@@ -1,5 +1,5 @@
-<repoman>
-  <name>remi</name>
+<yumrepo>
+  <name dist="el,fc">remi</name>
   <sources>
     <source>
       <id>1</id>
@@ -13,20 +13,20 @@
       <id>1</id>
       <name>remi</name>
       <source>1</source>
-      <requires>
-        <fedora>rpmfusion</fedora>
-        <el>epel</el>
-      </requires>
+      <requires>rpmfusion</requires>
+      <override dist="el">
+        <requires>epel</requires>
+      </override>
     </repo>
     <repo>
       <id>2</id>
       <name>remi-test</name>
       <alias>remi-testing</alias>
       <source>1</source>
-      <requires>
-        <fedora>rpmfusion</fedora>
-        <el>epel</el>
-      </requires>
+      <requires>rpmfusion</requires>
+      <override dist="el">
+        <requires>epel</requires>
+      </override>
     </repo>
   </repos>
-</repoman>
+</yumrepo>
