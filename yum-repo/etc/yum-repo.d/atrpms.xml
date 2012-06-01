@@ -1,10 +1,10 @@
 <yumrepo>
-  <name dist="el,fc">atrpms</name>
+  <name dist="kororaa,fedora,rhel,centos">atrpms</name>
   <sources>
     <source>
       <id>1</id>
       <type>rpm</type>
-      <url>http://dl.atrpms.net/all/atrpms-repo-$releasever-5.$distro$releasever.$basearch.rpm</url>
+      <url>http://dl.atrpms.net/all/atrpms-repo-$releasever-5.$dist$releasever.$basearch.rpm</url>
       <packagename>atrpms-repo</packagename>
     </source>
   </sources>

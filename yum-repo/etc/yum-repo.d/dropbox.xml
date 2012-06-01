@@ -1,12 +1,13 @@
 <yumrepo>
-  <name dist="fc">dropbox</name>
+  <name dist="kororaa,fedora">dropbox</name>
   <sources>
     <source>
       <id>1</id>
       <type>manual</type>
-      <url dist="fc">http://linux.dropbox.com/fedora/$releasever/</url>
-      <gpg dist="fc">http://linux.dropbox.com/fedora/rpm-public-key.asc</gpg>
+      <url dist="kororaa,fedora">http://linux.dropbox.com/fedora/$releasever/</url>
+      <gpg dist="kororaa,fedora">http://linux.dropbox.com/fedora/rpm-public-key.asc</gpg>
     </source>
+  </sources>
   <repos>
     <repo>
       <id>1</id>

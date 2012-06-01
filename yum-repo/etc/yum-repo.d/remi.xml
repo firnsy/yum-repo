@@ -1,5 +1,5 @@
 <yumrepo>
-  <name dist="el,fc">remi</name>
+  <name dist="kororaa,fedora,rhel,centos">remi</name>
   <sources>
     <source>
       <id>1</id>
@@ -14,7 +14,7 @@
       <name>remi</name>
       <source>1</source>
       <requires>rpmfusion</requires>
-      <override dist="el">
+      <override dist="rhel,centos">
         <requires>epel</requires>
       </override>
     </repo>
@@ -24,7 +24,7 @@
       <alias>remi-testing</alias>
       <source>1</source>
       <requires>rpmfusion</requires>
-      <override dist="el">
+      <override dist="rhel,centos">
         <requires>epel</requires>
       </override>
     </repo>

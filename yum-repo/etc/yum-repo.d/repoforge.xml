@@ -1,5 +1,5 @@
 <yumrepo>
-  <name dist="el">repoforge</name>
+  <name dist="rhel,centos">repoforge</name>
   <alias>rpmforge</alias>
   <sources>
     <source>

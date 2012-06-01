@@ -34,7 +34,7 @@ import pprint
 
 #
 # LOCAL IMPORTS
-from utilities import xmlToRepoObject, xmlToDict, elementToDict, downloadFile
+from utilities import xmlToRepoObject, elementToDict, downloadFile, RepoSack
 
 
 class RepoManager:
@@ -54,6 +54,7 @@ class RepoManager:
   FILE_RPM  = 1
 
   def __init__(self):
+    self._reposack = RepoSack()
     self._cache = []
     self._yb = yum.YumBase()
     self._tmp_path = RepoManager.TMP_PATH
@@ -69,24 +70,31 @@ class RepoManager:
 
     cache_files = glob.glob(os.path.join(path, "*.xml"))
 
-    print "Loading repo definition files:"
+    _loaded = []
 
     for f in cache_files:
 
       try:
+        self._reposack.importFromXML(f)
+
         self._cache.append( xmlToRepoObject(f) )
 
       except:
-        print "  - %s" % f
+        print "  - %s (Error)" % f
       else:
-        print "  - %s" % f
+        _loaded.append(os.path.basename(f))
 
-#      pp = pprint.PrettyPrinter(indent=2)
-#      pp.pprint( xmlToRepoObject( f ) )
-
-
+    if len(_loaded) > 0:
+      print "Loaded repo definitions: %s" % ( ", ".join(_loaded) )
 
   def add_repo(self, repo):
+
+    _repos = self._reposack.validate(repo)
+    for _r in _repos:
+      print _r
+
+
+    return 0
 
     r = self.format_repo(repo)
 

@@ -1,5 +1,5 @@
 <yumrepo>
-  <name dist="el">epel</name>
+  <name dist="rhel,centos">epel</name>
   <sources>
     <source>
       <id>1</id>

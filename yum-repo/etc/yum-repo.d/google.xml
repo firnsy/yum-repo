@@ -1,5 +1,5 @@
 <yumrepo>
-  <name dist="el,fc">google</name>
+  <name dist="kororaa,fedora,rhel,centos">google</name>
   <sources>
     <source>
       <id>1</id>
@@ -31,6 +31,7 @@
       <url>http://dl.google.com/linux/musicmanager/rpm/stable/$basearch</url>
       <gpg>https://dl-ssl.google.com/linux/linux_signing_key.pub</gpg>
     </source>
+  </sources>
   <repos>
     <repo>
       <id>1</id>

@@ -1,11 +1,11 @@
 <yumrepo>
-  <name dist="el,fc">kde-redhat</name>
+  <name dist="kororaa,fedora,rhel,centos">kde-redhat</name>
   <sources>
     <source>
       <id>1</id>
       <type>spec</type>
-      <url dist="fc">http://apt.kde-redhat.org/apt/kde-redhat/fedora/kde.repo</url>
-      <url dist="el">http://apt.kde-redhat.org/apt/kde-redhat/redhat/kde.repo</url>
+      <url dist="kororaa,fedora">http://apt.kde-redhat.org/apt/kde-redhat/fedora/kde.repo</url>
+      <url dist="rhel,centos">http://apt.kde-redhat.org/apt/kde-redhat/redhat/kde.repo</url>
     </source>
   </sources>
   <repos>
@@ -14,7 +14,7 @@
       <name>kde</name>
       <source>1</source>
       <requires>rpmfusion</requires>
-      <override dist="el">
+      <override dist="rhel,centos">
           <requires>epel</requires>
       </override>
     </repo>
@@ -23,17 +23,17 @@
       <name>kde-testing</name>
       <source>1</source>
       <requires>rpmfusion</requires>
-      <override dist="el">
+      <override dist="rhel,centos">
           <requires>epel</requires>
       </override>
     </repo>
-    <repo fedora=1>
+    <repo>
       <id>1</id>
       <name>kde-unstable</name>
       <alias>kde-rawhide</alias>
       <source>1</source>
       <requires>rpmfusion</requires>
-      <override dist="el">
+      <override dist="rhel,centos">
           <requires>epel</requires>
       </override>
     </repo>

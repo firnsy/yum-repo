@@ -1,5 +1,5 @@
 <yumrepo>
-  <name dist="fc,el">adobe</name>
+  <name dist="kororaa,fedora,rhel,centos">adobe</name>
   <sources>
     <source>
       <id>1</id>

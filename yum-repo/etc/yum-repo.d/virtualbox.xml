@@ -1,11 +1,11 @@
 <yumrepo>
-  <name dist="el,fc">virtualbox</name>
+  <name dist="kororaa,fedora,rhel,centos">virtualbox</name>
   <sources>
     <source>
       <id>1</id>
       <type>spec</type>
-      <url dist="el">http://download.virtualbox.org/virtualbox/rpm/rhel/virtualbox.repo</url>
-      <url dist="fc">http://download.virtualbox.org/virtualbox/rpm/fedora/virtualbox.repo</url>
+      <url dist="rhel,centos">http://download.virtualbox.org/virtualbox/rpm/rhel/virtualbox.repo</url>
+      <url dist="kororaa,fedora">http://download.virtualbox.org/virtualbox/rpm/fedora/virtualbox.repo</url>
     </source>
   </sources>
   <repos>
