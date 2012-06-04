@@ -107,22 +107,37 @@ class RepoSack:
             # we should have enough source information now to validate, assume it's valid and test for invalidity
 
             # require a sindle id
-            if _source.has_key('id') and \
-               len(_source['id']) > 1:
-              print "ERROR: Only one unique ID per source should be specified."
-              continue
+            if _source.has_key('id'):
+              if len(_source['id']) > 1:
+                print "ERROR: Only one unique ID per source should be specified."
+                continue
 
-            else:
-              _source['id'] = _source['id'][0]
+              else:
+                _source['id'] = _source['id'][0]
 
             # require a sindle type
-            if _source.has_key('type') and \
-               len(_source['type']) > 1:
-              print "ERROR: Only one unique type per source should be specified."
-              continue
+            if _source.has_key('type'):
+              if len(_source['type']) > 1:
+                print "ERROR: Only one unique type per source should be specified."
+                continue
 
-            else:
-              _source['type'] = _source['type'][0]
+              else:
+                _source['type'] = _source['type'][0]
+
+            # require a single package name
+            if _source.has_key('packagename'):
+              if len(_source['packagename']) > 1:
+                print "ERROR: Only one unique package name per source should be specified."
+                continue
+              else:
+                _source['packagename'] = _source['packagename'][0]
+
+            if _source.has_key('url'):
+              if len(_source['url']) > 1:
+                print "ERROR: Only one valid URL per source should be specified. Check your filters/overrides."
+                continue
+              else:
+                _source['url'] = _source['url'][0]
 
             # we must be valid so let's add it to the available
             _sources[ _source['id'] ] = _source
@@ -161,26 +176,29 @@ class RepoSack:
             # we should have enough repo information now to validate, assume it's valid and test for invalidity
 
             # require a sindle ID
-            if _repo.has_key('id') and \
-               len(_repo['id']) > 1:
-              print "ERROR: Only one unique ID per repo should be specified."
-              continue
-            else:
-              _repo['id'] = _repo['id'][0]
+            if _repo.has_key('id'):
+              if len(_repo['id']) > 1:
+                print "ERROR: Only one unique ID per repo should be specified."
+                continue
 
-            if _repo.has_key('source') and \
-               len(_repo['source']) > 1:
-              print "ERROR: Only one valid source per repo should be specified. Check your filters perhaps?"
-              continue
-            else:
-              _repo['source'] = _sources[ _repo['source'][0] ]
+              else:
+                _repo['id'] = _repo['id'][0]
 
-            if _repo.has_key('name') and \
-               len(_repo['name']) > 1:
-              print "ERROR: Only one valid name per repo should be specified. Additional names can be specified by the alias."
-              continue
-            else:
-              _repo['name'] = _repo['name'][0]
+            if _repo.has_key('source'):
+              if len(_repo['source']) > 1:
+                print "ERROR: Only one valid source per repo should be specified. Check your filters/overrides."
+                continue
+
+              else:
+                _repo['source'] = _sources[ _repo['source'][0] ]
+
+            if _repo.has_key('name'):
+              if len(_repo['name']) > 1:
+                print "ERROR: Only one valid name per repo should be specified. Additional names can be specified by the alias."
+                continue
+
+              else:
+                _repo['name'] = _repo['name'][0]
 
             # we must be valid so let's add it to the available
             self._repos.append( Repo( _repo ) )
@@ -200,6 +218,11 @@ class RepoSack:
     print "DEBUG: auto detecting: %s" % (uri)
 
     (_proto, _domain, _path, _base, _extension) = parseURI(uri)
+    _basename = _base
+    if _extension != "":
+      _basename += "." + _extension
+
+    _source.setBasename(_basename)
 
     # first pass determination at the source type
     if _proto == 'http':
@@ -280,7 +303,7 @@ class RepoSack:
 
 
   def search(self, url):
-    _found = []
+    _repos = []
 
     _tokens = url.split(":")
 # short form
@@ -295,12 +318,22 @@ class RepoSack:
       else:
         _filter = '*'
 
+      _found = False
+      _repos_staging = []
+
       for _r in self._repos:
         if _r.isGroup(_tokens[0]):
           for _f in _filter:
             if _r.isAlias(_f) or _f == '*':
-              print "Found a match: %s" % (_r)
-              _found.append(_r)
+              _found = True
+              _r.enable()
+
+          _repos_staging.append(_r)
+
+      if _found:
+        _repos += _repos_staging
+      else:
+        print "WARNING: Filters did not match any repos."
 
 # fedora-people
 # fp:bioinformatics/0ad
@@ -321,7 +354,7 @@ class RepoSack:
       for _r in self._repos:
         if _r.getSource().isURL(url):
           print "Found a match: %s" % (_r)
-          _found.append(_r)
+          _repos.append(_r)
 
     elif ":" in url:
       (_group, _filter) = url.split(":")
@@ -332,19 +365,23 @@ class RepoSack:
           for _f in _filter:
             if _r.isAlias(_f):
               print "Found a match: %s" % (_r)
-              _found.append(_r)
+              _repos.append(_r)
               break
 
+    # otherwise assume we are referencing the repo name itself
     else:
-      _group = url
-
       for _r in self._repos:
-        if _r.isGroup(_group):
-          print "Found a match: %s" % (_r)
-          _found.append(_r)
-          break
+        if _r.isAlias(url):
+          _r.enable()
+          _repos.append(_r)
 
-    return _found
+    # satisfy all requires
+
+
+    # determine conflicts
+
+
+    return _repos
 
 
   def validate(self, url):
@@ -406,11 +443,20 @@ class Source:
 
     self._install_type = Source.FILE_MANUAL
 
+    # RPM/REPO specific
+    self._basename = ""
+
+    # RPM specific
+    self._package_name = ""
+
     self.loadObject(_object)
 
   def loadObject(self, _object):
     if _object.has_key('gpg'):
       self._gpg = _object['gpg']
+
+    if _object.has_key('packagename'):
+      self._package_name = _object['packagename']
 
     if _object.has_key('url'):
       self._url = _object['url']
@@ -422,6 +468,15 @@ class Source:
         self._install_type = Source.FILE_RPM
       elif _object['type'] == 'manual':
         self._install_type = Source.FILE_MANUAL
+
+  def getPackageName(self):
+    return self._package_name
+
+  def getBasename(self):
+    return self._basename
+
+  def setBasename(self, _basename):
+    self._basename = _basename
 
   def getURL(self):
     return self._url
@@ -468,6 +523,9 @@ class Source:
     if self._gpg != "":
       _str +=  "    gpg: %s\n" % (self._gpg)
 
+    if self._package_name != "":
+      _str +=  "    package: %s\n" % (self._package_name)
+
     _str +=  "  }"
 
     return _str
@@ -492,13 +550,16 @@ class Repo:
     self._source = Source()
 
     self._group = ""
-    self._name = "unknown"
+    self._name = ""
+    self._repo_name = ""
     self._alias = []
     self._arch = []
     self._distributions = []
 
     self._requires = []
     self._conflicts = []
+
+    self._enabled = False
 
     self.loadObject(_object)
 
@@ -511,6 +572,15 @@ class Repo:
     else:
       print "ERROR: Expected a Source object."
 
+  def enable(self):
+    self._enabled = True
+
+  def disable(self):
+    self._enabled = False
+
+  def isEnabled(self):
+    return self._enabled
+
   def getGroup(self):
     return self._group
 
@@ -522,6 +592,20 @@ class Repo:
 
   def setName(self, name):
     self._name = name
+
+    # set reponame if approriate
+    if self._repo_name == "":
+      self._repo_name = name
+
+  def getRepoName(self):
+    return self._repo_name
+
+  def setRepoName(self, name):
+    self._repo_name = name
+
+    # set canonical name if approriate
+    if self._name == "":
+      self._name = name
 
   def getArch(self):
     return self._arch
@@ -585,6 +669,9 @@ class Repo:
     if _object.has_key('name'):
       self.setName(_object['name'])
 
+    if _object.has_key('reponame'):
+      self.setRepoName(_object['reponame'])
+
     if _object.has_key('group'):
       self.setGroup(_object['group'])
 
@@ -607,7 +694,8 @@ class Repo:
 
   def isAlias(self, name):
     return ( name in self._alias ) or \
-           ( name == self._name )
+           ( name == self._name ) or \
+           ( name == self._repo_name )
 
   def isGroup(self, group):
     return ( group == self._group )
@@ -619,6 +707,7 @@ class Repo:
   def __str__(self):
     _str =   "repo: {\n"
     _str +=  "  name: %s\n" % (self._name)
+    _str +=  "  enabled: %s\n" % (self._enabled)
 
     if len(self._alias) > 0:
       _str +=  "  alias: %s\n" % (self._alias)

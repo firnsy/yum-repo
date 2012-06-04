@@ -34,7 +34,7 @@ import pprint
 
 #
 # LOCAL IMPORTS
-from utilities import xmlToRepoObject, elementToDict, downloadFile, RepoSack
+from utilities import xmlToRepoObject, elementToDict, downloadFile, RepoSack, Repo, Source
 
 
 class RepoManager:
@@ -73,238 +73,80 @@ class RepoManager:
     _loaded = []
 
     for f in cache_files:
-
       try:
         self._reposack.importFromXML(f)
 
-        self._cache.append( xmlToRepoObject(f) )
-
       except:
         print "  - %s (Error)" % f
+
       else:
         _loaded.append(os.path.basename(f))
 
     if len(_loaded) > 0:
       print "Loaded repo definitions: %s" % ( ", ".join(_loaded) )
 
+
   def add_repo(self, repo):
 
     _repos = self._reposack.validate(repo)
+    _sources = []
+
+    # consolidate unique sources
     for _r in _repos:
-      print _r
-
-
-    return 0
-
-    r = self.format_repo(repo)
-
-    # check for fedora people repo
-    if r['source_type'] == RepoManager.URL_FEDORA_PEOPLE:
-      return self.add_repo_fedora_people(r['basename'])
-
-    # check short form cache
-    if r['cache']:
-      return self.add_repo_cache(repo)
-
-    # check for RPM files
-    if r['install_type'] == RepoManager.FILE_RPM:
-      return self.add_repo_rpm(repo)
-
-    # check if it's a URL
-    if r['source_type'] == RepoManager.URL_RAW:
-      return self.add_repo_url(repo)
-
-    return 0
-
-
-  def format_repo(self, repo):
-
-    _repo = {'path': repo, 'basename': repo, 'source_type': 'UNKNOWN', 'install_type': 'UNKNOWN', 'cache': 0, 'filter': ['*']}
-
-    # first pass determination at the source type
-    if repo.startswith('http://'):
-      _repo['basename'] = repo[7:]
-      _repo['source_type'] = RepoManager.URL_RAW
-    elif repo.startswith('ftp://'):
-      _repo['basename'] = repo[6:]
-      _repo['source_type'] = RepoManager.URL_RAW
-    elif repo.startswith('https://'):
-      _repo['basename'] = repo[8:]
-      _repo['source_type'] = RepoManager.URL_RAW
-
-    elif repo.startswith('fp://'):
-      _repo['basename'] = repo[5:]
-      _repo['install_type'] = RepoManger.URL_FEDORA_PEOPLE
-    elif repo.startswith('fp:'):
-      _repo['basename'] = repo[3:]
-      _repo['source_type'] = RepoManager.URL_FEDORA_PEOPLE
-
-    elif repo.startswith('file:///'):
-      _repo['basename'] = repo[8:]
-      _repo['install_type'] = RepoManager.URL_LOCAL
-    elif repo.startswith('/'):
-      _repo['basename'] = repo[1:]
-      _repo['install_type'] = RepoManager.URL_LOCAL
-
-    # short form
-    elif ':' in repo:
-      _repo['basename'] = repo[:repo.index(':')]
-      _repo['filter'] = repo[repo.index(':')+1:].split(',')
-
-    print("DEBUG: Calculated basename is %s" % (_repo['basename']))
-
-    # check if it's cached
-    for c in self._cache:
-      print c['name'][0]
-      if c['name'][0] == _repo['basename']:
-        print("REPO is cached")
-        _repo['cache'] = 1
-        break
-
-    if repo.endswith('.rpm'):
-      _repo['basename'] = repo[:repo.index(':')]
-      _repo['install_type'] = RepoManager.FILE_RPM
-
-    return _repo
-
-
-#
-# ADD METHODS
-
-  def add_repo_cache(self, repo, c):
-
-    # default to all repo branches defined in the cache
-    repo_filter = ['*']
-
-    if ':' in repo:
-      repo_name = repo[:repo.index(':')]
-      repo_filter = repo[repo.index(':')+1:].split(',')
-
-    else:
-      repo_name = repo
-
-    # process
-    repo_filter_enable = []
-    repo_filter_disable = []
-
-    repo_source = []
-
-    # map the requested filter to enable and disable lists
-    for r in c['repos'][0]['repo']:
-
-      aliases = set([])
-      if r.has_key('alias'):
-        aliases = set(r['alias'])
-
-      if r['name'][0] in repo_filter or \
-         len(set(repo_filter).intersection(aliases)) or \
-         '*' in repo_filter:
-        repo_filter_enable.append(r['name'][0])
-
-        # add the source requirement if not accounted for
-        if r['source'][0] not in repo_source:
-          repo_source.append(r['source'][0])
+      for _s in _sources:
+        if _s.isEqual(_r.getSource()):
+          break;
 
       else:
-        repo_filter_disable.append(r['name'][0])
-
+        _sources.append(_r.getSource())
 
     # install the sources
-    if len(repo_source) == 0:
-      return 1
+    for _s in _sources:
+      if _s.getInstallType() == Source.FILE_REPO:
+        self.install_repo(_s)
 
-    for s in c['sources'][0]['source']:
-      if s['id'][0] in repo_source:
-        if s['install_type'][0] == 'rpm':
-          self.install_repo_rpm(s['url'][0], s['packagename'][0])
+      elif _s.getInstallType() == Source.FILE_RPM:
+        self.install_rpm(_s)
 
-        elif s['install_type'][0] == 'file':
-          self.install_repo_file(s['url'][0])
+      elif _s.getInstallType() == Source.FILE_MANUAL:
+        self.install_manual(_s)
+
+    # enable/disable the repos
+    for _r in _repos:
+      _yr = self._yb.repos.getRepo(_r.getName())
+
+      if _yr.isEnabled() != _r.isEnabled():
+        if _r.isEnabled():
+          _yr.enablePersistent()
 
         else:
-          print("Unknown source type: %s" % s['install_type'][0])
+          _yr.disablePersistent()
 
-    # re-read repo configuration
-#  yb.getReposFromConfig()
+    return 0
 
-    # enable the repos
-    for r in repo_filter_enable:
-      r = self._yb.repos.getRepo(r)
-
-      if r.isEnabled():
-        continue
-
-      print "Enabling: %s" % r
-      r.enablePersistent()
-
-
-    # disable the repos
-    for r in repo_filter_disable:
-      r = self._yb.repos.getRepo(r)
-
-      if not r.isEnabled():
-        continue
-
-      print "Disabling: %s" % r
-      r.disablePersistent()
-
-
-  def add_repo_fedora_people(self, repo):
-
-    print "Adding fedora people repository: %s" % repo
-
-    repo_tokens = repo.split('/')
-
-    if len(repo_tokens) > 2:
-      print "ERROR: Invalid repository specified."
-      return 0
-
-    repo_user = repo_tokens[0]
-    repo_name = repo_tokens[1]
-    repo_url = "http://repos.fedorapeople.org/repos/%s/%s/fedora-%s.repo" % ( repo_user, repo_name, repo_name)
-
-    print "Fetching: %s" % repo_url
-
-    self.install_repo_file(repo_url)
-
-  def add_repo_rpm(self, repo):
-    pass
-
-
-  def add_repo_file(self, repo):
-    pass
-
-  def add_repo_url(self, repo):
-    pass
 
 
 #
 # INSTALL METHODS
 
-
-  def install_repo_rpm(self, url, package):
-    print("Installing repo, via RPM, from: %s" % url)
-
+  def install_rpm(self, _source):
     ts = rpm.TransactionSet()
 
-    # trim the file name from the URL
-    rpm_file = url[url.rindex('/')+1:]
-
-    mi = ts.dbMatch('name', package)
+    mi = ts.dbMatch('name', _source.getPackageName())
 
     if ( mi ):
-
       if len(mi) > 1:
-        print("Ambiguous package name: %s" % package)
+        print("Ambiguous package name: %s" % _source.getPackageName())
+
       else:
-        print("INSTALLED: %s" % package)
+        print("INSTALLED: %s" % _source.getPackageName())
 
     else:
-      print("Package NOT installed: %s" % package)
+      print("Installing repo, via RPM, from: %s" % _source.getURL())
 
       return
 
-      dst_path = downloadFile(url)
+      dst_path = downloadFile(_source.getURL())
 
       if not os.path.exists(dst_path):
         print "Error downloading file."
@@ -317,29 +159,30 @@ class RepoManager:
 
       try:
         h = ts.hdrFromFdno(fd)
+
       except rpm.error, e:
         print(e)
 
       os.close(fd)
 
-      ts.addInstall(h, rpm_file, 'i')
+      ts.addInstall(h, _source.getBasename(), 'i')
       ts.check()
       ts.order()
-      ts.run(install_repo_rpm_callback, '')
+      ts.run(install_rpm_callback, '')
 
 
-  def install_repo_rpm_callback(self, reason, amount, total, key, client_data):
-      if reason == rpm.RPMCALLBACK_INST_START:
-        pass #print "Starting installation."
-      elif reason == rpm.RPMCALLBACK_TRANS_STOP:
-        pass #print "Transation stopping"
+  def install_rpm_callback(self, reason, amount, total, key, client_data):
+    if reason == rpm.RPMCALLBACK_INST_START:
+      pass #print "Starting installation."
+
+    elif reason == rpm.RPMCALLBACK_TRANS_STOP:
+      pass #print "Transation stopping"
 
 
+  def install_repo(self, _source):
+    print("Installing repo file from: %s" % _source.getURL())
 
-  def install_repo_file(self, url):
-    print("Installing repo file from: %s" % url)
-
-    dst_path = os.path.join(self._yum_repos_path, url[url.rindex('/')+1:])
+    dst_path = os.path.join(self._yum_repos_path, _source.getBasename())
 
     dst_path = downloadFile(url, dst_path)
 
@@ -347,133 +190,32 @@ class RepoManager:
       print "Error downloading file."
       return 1
 
-    # install into the yum repo store
-
+  def install_manual(self, _source):
+    pass
 
 #
 # ENABLE/DISABLE METHODS
 
-
   def enable_repo(self, repo):
-    r = self.format_repo(repo)
+    _repos = self._reposack.validate(repo)
 
-    repo_found = False
+    # enable/disable the repos
+    for _r in _repos:
+      _yr = self._yb.repos.getRepo(_r.getName())
 
-    # check repoman short form cache
-    if r['cache']:
-      repo_found = True
-      self.enable_repo_cache(repo, c)
-
-    # check for package explicitly
-    for r['basename'] in self._yb.repos.findRepos(repo):
-      print r
-      repo_found = True
-
-      if r.isEnabled():
-        continue
-
-      r.enablePersistent()
-
-    if not repo_found:
-      print "Repository does not exist."
-
-
-  def enable_repo_cache(self, repo, c):
-    # default to all repo branches defined in the cache
-    repo_filter = ['*']
-
-    if ':' in repo:
-      repo_name = repo[:repo.index(':')]
-      repo_filter = repo[repo.index(':')+1:].split(',')
-
-    else:
-      repo_name = repo
-
-    # process
-    repo_filter_enable = []
-
-    # map the requested filter to enable and disable lists
-    for r in c['repos'][0]['repo']:
-
-      aliases = set([])
-      if r.has_key('alias'):
-        aliases = set(r['alias'])
-
-      if r['name'][0] in repo_filter or \
-         len(set(repo_filter).intersection(aliases)) or \
-         '*' in repo_filter:
-        repo_filter_enable.append(r['name'][0])
-
-    # enable the repos
-    for r in repo_filter_enable:
-      r = self._yb.repos.getRepo(r)
-
-      if r.isEnabled():
-        continue
-
-      print "Enabling: %s" % r
-      r.enablePersistent()
+      if _yr.isEnabled() != _r.isEnabled():
+        _yr.enablePersistent()
 
 
   def disable_repo(self, repo):
-    r = self.format_repo(repo)
+    _repos = self._reposack.validate(repo)
 
-    repo_found = False
+    # enable/disable the repos
+    for _r in _repos:
+      _yr = self._yb.repos.getRepo(_r.getName())
 
-    # check repoman short form cache
-    if r['cached']:
-      repo_found = True
-      disable_repo_cache(repo, c)
-
-    # check for package explicitly
-    for r in self._yb.repos.findRepos(repo):
-      print r
-      repo_found = True
-
-      if not r.isEnabled():
-        continue
-
-      r.disablePersistent()
-
-    if not repo_found:
-      print "Repository does not exist."
-
-
-  def disable_repo_cache(self, repo, c):
-    # default to all repo branches defined in the cache
-    repo_filter = ['*']
-
-    if ':' in repo:
-      repo_name = repo[:repo.index(':')]
-      repo_filter = repo[repo.index(':')+1:].split(',')
-
-    else:
-      repo_name = repo
-
-    # process
-    repo_filter_disable = []
-
-    # map the requested filter to enable and disable lists
-    for r in c['repos'][0]['repo']:
-
-      aliases = set([])
-      if r.has_key('alias'):
-        aliases = set(r['alias'])
-
-      if r['name'][0] in repo_filter or \
-         len(set(repo_filter).intersection(aliases)) or \
-         '*' in repo_filter:
-        repo_filter_disable.append(r['name'][0])
-
-    # enable the repos
-    for r in repo_filter_disable:
-      r = self._yb.repos.getRepo(r)
-
-      if not r.isEnabled():
-        continue
-
-      print "Disabling: %s" % r
-      r.disablePersistent()
+      if _yr.isEnabled() == _r.isEnabled():
+        _yr.disablePersistent()
 
 
 #
@@ -483,26 +225,43 @@ class RepoManager:
     # print warning
     print("WARNING: Disabling or deleting a repository may leave your system without important updates.")
 
-    # check for package explicitly
-    r = self.format_repo(repo)
+    _repos = self._reposack.validate(repo)
+    _sources = []
+
+    # consolidate unique sources
+    for _r in _repos:
+      for _s in _sources:
+        if _s.isEqual(_r.getSource()):
+          break;
+
+      else:
+        _sources.append(_r.getSource())
 
     repo_found = False
 
-    for r in self._yb.repos.findRepos(repo):
-      repo_found = True
-
-      if not repo_found:
+    for _r in _repos:
+      if not _r.isEnabled():
         continue
 
-      # get the yum repo conf for the repo
-      repo_file = r.repofile
+      _yr = self._yb.repos.findRepos(_r.getRepoName())
 
-      # get repo config if provided by rpm
+      if _yr is None:
+        continue
+      elif len(_yr) > 1:
+        print "WARNING: Multiple repos by the name of: %s" % (_r.getRepoName())
+
+      repo_found = True
+
+      # get the yum repo conf for the repo
+      repo_file = _yr[0].repofile
+
+      # check if repo is provided by rpm
       package_name = self._yb.pkgSack.searchProvides(repo_file)[0].name
       installed = self._yb.isPackageInstalled(package_name)
 
       if installed:
         package = self._yb.rpmdb.returnNewestByName(package_name)[0]
+
         # identify other repo files in rpm
         extra_repos = []
         for r in package.filelist:
@@ -527,9 +286,11 @@ class RepoManager:
         print("Removing %s will also remove the following repositories:\n" % (package_name))
         for r in extra_repos:
           print("\t%s" % (r))
-        print("\n Removing %s will also remove the following dependencies:\n" % (package_name))
-        for d in deps:
-          print("\t%s" % (d))
+
+        if len(deps) > 0:
+          print("\nRemoving %s will also remove the following dependencies:\n" % (package_name))
+          for d in deps:
+            print("\t%s" % (d))
 
         confirm_removal = raw_input("\nRemove %s? (y/N): " % (package_name))
         if confirm_removal.upper().startswith("Y"):
