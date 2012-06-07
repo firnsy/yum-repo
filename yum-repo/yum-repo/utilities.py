@@ -106,7 +106,7 @@ class RepoSack:
 
             # we should have enough source information now to validate, assume it's valid and test for invalidity
 
-            # require a sindle id
+            # require a single id
             if _source.has_key('id'):
               if len(_source['id']) > 1:
                 print "ERROR: Only one unique ID per source should be specified."
@@ -115,7 +115,7 @@ class RepoSack:
               else:
                 _source['id'] = _source['id'][0]
 
-            # require a sindle type
+            # require a single type
             if _source.has_key('type'):
               if len(_source['type']) > 1:
                 print "ERROR: Only one unique type per source should be specified."
@@ -336,12 +336,9 @@ class RepoSack:
         print "WARNING: Filters did not match any repos."
 
 # fedora-people
-# fp:bioinformatics/0ad
 #
-
     elif _tokens[0] == "fp":
       pass
-
 
 # URL
 #    file://
@@ -488,7 +485,7 @@ class Source:
     return self._type
 
   def setType(self, _type):
-    self._source_type = _type
+    self._type = _type
 
   def getGPG(self):
     return self.__gpg
@@ -722,108 +719,6 @@ class Repo:
     _str +=  "}"
 
     return _str
-
-
-#
-# REPO UTILITY FUNCTIONS
-def xmlToRepoObject(xmlfile):
-  try:
-
-    _repo_raw = xmlToDict(xmlfile)
-
-  except:
-    e = sys.exc_info()[1]
-    print("ERROR: %s (%s)" % (e, xmlfile) )
-    return {}
-
-#
-# RPM containing repo information
-# {
-#   'type': 'rpm'
-#   'url': absolute_path (eg. http://blah.com/test.rpm or file:///tmp/test.rpm)
-#   'basename': base_name of url
-# }
-#
-# FILE containing repo information
-# {
-#   'type': 'file'
-#   'url': absolute_path (eg. http://blah.com/test.rpm or file:///tmp/test.rpm)
-#   'basename': base_name of url
-# }
-#
-#
-  _repo_object = {
-    'name':     _repo_raw['name'],
-    'id':       0,
-    'sources':  {},
-    'repos':    {}
-  }
-
-  # TODO: validate core requirements
-
-  for r in _repo_raw['sources'][0]['source']:
-
-    # check for inline attributes in url
-    # filter on dist
-
-    _repo_object['sources'][ r['id'][0] ] = {
-      'type': r['type'][0],
-      'url': r['url'][0],
-#      'packagename': r['packagename'][0]
-    }
-
-  # TODO: validate source ID's
-  for r in _repo_raw['repos'][0]['repo']:
-    _repo_object['repos'][ r['id'][0] ] = {
-      'name': r['name'][0],
-#      'alias': r['alias'],
-      'source': r['source'][0]
-    }
-
-
-
-
-
-
-
-  return _repo_object
-
-#
-# XML UTILITY FUNCTIONS
-def xmlToDict(xmlfile):
-  doc = parse(xmlfile)
-
-  return elementToDict(doc.documentElement)
-
-
-def elementToDict(parent):
-  child = parent.firstChild
-
-  if (not child):
-    return None
-
-  # ignore whitespace and line feed crap
-  while child.nodeType == Node.TEXT_NODE and not child.data.strip():
-    child = child.nextSibling
-
-  if (child.nodeType == Node.TEXT_NODE):
-    return child.nodeValue
-
-  d = {}
-
-  while child is not None:
-    if (child.nodeType == Node.ELEMENT_NODE):
-      try:
-        d[child.tagName]
-      except KeyError:
-        d[child.tagName] = []
-
-      d[child.tagName].append(elementToDict(child))
-
-    child = child.nextSibling
-
-  return d
-
 
 #
 # URL UTILTIES FUNCTIONS

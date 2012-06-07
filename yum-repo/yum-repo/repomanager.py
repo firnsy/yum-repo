@@ -34,7 +34,7 @@ import pprint
 
 #
 # LOCAL IMPORTS
-from utilities import xmlToRepoObject, elementToDict, downloadFile, RepoSack, Repo, Source
+from utilities import downloadFile, RepoSack, Repo, Source
 
 
 class RepoManager:
@@ -113,6 +113,10 @@ class RepoManager:
 
     # enable/disable the repos
     for _r in _repos:
+      # accept the defaults when downloading from Fedora People
+      if _r.getSource().getType() == Source.URL_FEDORA_PEOPLE:
+        continue
+
       _yr = self._yb.repos.getRepo(_r.getName())
 
       if _yr.isEnabled() != _r.isEnabled():
@@ -184,7 +188,7 @@ class RepoManager:
 
     dst_path = os.path.join(self._yum_repos_path, _source.getBasename())
 
-    dst_path = downloadFile(url, dst_path)
+    dst_path = downloadFile(_source.getURL(), dst_path)
 
     if not os.path.exists(dst_path):
       print "Error downloading file."
